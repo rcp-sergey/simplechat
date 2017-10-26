@@ -2,9 +2,11 @@ package sample.chatclient;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
+//Singleton class that establishes and maintains clients connection to chat server
 public class Connection {
     private static final String SERVER_ADDR = "localhost";
     private static final int SERVER_PORT = 4000;
@@ -25,14 +27,14 @@ public class Connection {
     private Connection() {
         startConnection();
     }
-
+    /*
     public static DataInputStream getIn() {
         return in;
     }
 
     public static DataOutputStream getOut() {
         return out;
-    }
+    }*/
 
     public void startConnection() {
         try {
@@ -45,6 +47,7 @@ public class Connection {
         }
     }
 
+    // clients authentication method
     public String auth(String login, String pass) {
         sendMessage("/auth " + login + " " + pass);
         String response = receiveMessage();
@@ -68,6 +71,8 @@ public class Connection {
         String msg = null;
         try {
             msg = in.readUTF();
+        } catch (EOFException e) {
+            //catch end of file condition
         } catch (IOException e) {e.printStackTrace();}
         return msg;
     }

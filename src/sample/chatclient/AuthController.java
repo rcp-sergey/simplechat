@@ -16,14 +16,13 @@ public class AuthController {
     private Button logInButton;
     @FXML
     private Label systemMessage;
+    private Connection conn = Connection.getInstance();
 
     public void logIn() {
         systemMessage.setText("");
-        System.out.println();
-        String response = Connection.getInstance().auth(loginField.getText(), passField.getText());
+        String response = conn.auth(loginField.getText(), passField.getText());
         if (response.equals("success")) {
             Client.changeScene("chat.fxml");
         } else systemMessage.setText(response);
     }
-
 }

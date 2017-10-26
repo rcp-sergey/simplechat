@@ -11,9 +11,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -27,53 +24,56 @@ public class ChatController implements Initializable {
     @FXML
     private BorderPane chatPane;
     @FXML
+    Button sendButton;
+    @FXML
     private ListView onlineList;
-    private DataInputStream in;
-    private DataOutputStream out;
+    private Connection conn;
 
     public void sendMessage() {
         String message = messageInput.getText();
         if (!message.equals("")) {
-            try {
-                out.writeUTF(message);
-                out.flush();
+                conn.sendMessage(message);
                 messageInput.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
+    // starts message receiving thread
     public void startReceive() {
-        new Thread( () -> {
-                while (true) {
-                    String msg = "";
-                    msg = Connection.getInstance().receiveMessage();
-                    if (!msg.equals("")) {
-                        if (msg.startsWith("/currentonlinelist")) updateOnlineList(msg);
-                        else {
-                            messageArea.appendText(msg + "\n");
-                            System.out.println(msg);
-                        }
+        Thread receiveThread = new Thread( () -> {
+            String msg;
+            while (true) {
+                msg = null;
+                msg = conn.receiveMessage();
+                if (msg != null && !msg.equals("")) {
+                    if (msg.startsWith("/currentonlinelist")) updateOnlineList(msg);
+                    else {
+                        messageArea.appendText(msg + "\n");
+                        System.out.println(msg);
                     }
                 }
-        }).start();
+            }
+        });
+        receiveThread.setDaemon(true);
+        receiveThread.start();
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        in = Connection.getIn();
-        out = Connection.getOut();
+        conn = Connection.getInstance();
+
         String filename = location.getFile().substring(location.getFile().lastIndexOf('/') + 1, location.getFile().length());
         if (filename.equals("auth.fxml")) {
             fadeTrans(authPane);
         } else if (filename.equals("chat.fxml")) {
             fadeTrans(chatPane);
         }
+
         startReceive();
         setListViewListener();
     }
 
+    // listens for click on elements of ListView and starts private message input
+    // TODO add prefix without deleting already entered message
     public void setListViewListener() {
         onlineList.setOnMouseClicked(new EventHandler<MouseEvent>() {
 
@@ -84,9 +84,8 @@ public class ChatController implements Initializable {
             }
         });
     }
-
+    // updates GUI's list of online users
     public void updateOnlineList(String list) {
-        System.out.println("list" + list);
         String[] elements = list.split(" ");
         elements[0] = "ONLINE NOW";
         onlineList.getItems().clear();
@@ -95,6 +94,7 @@ public class ChatController implements Initializable {
         onlineList.refresh();
     }
 
+    // Scene change animation settings
     public void fadeTrans(Node e) {
         FadeTransition x = new FadeTransition(new Duration(2000), e);
         x.setFromValue(0);

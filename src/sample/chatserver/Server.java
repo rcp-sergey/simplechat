@@ -46,12 +46,14 @@ public class Server {
         }
     }
 
+    // sends message to all clients in array
     public void broadcast(String msg) {
         for (ClientHandler c : clients) {
             c.sendMessage(msg);
         }
     }
 
+    // checks if user with the same nick is already online
     public boolean isNickBusy(String nick) {
         for (ClientHandler c: clients) {
             if (c.getName().equals(nick)) return true;
@@ -59,8 +61,10 @@ public class Server {
         return false;
     }
 
+    // gathers nicknames of currently online users and returns them as sequence in String object
+    // TODO remove "undefinied" entries
     public String makeOnlineList() {
-        StringBuilder nicksOnline = new StringBuilder();
+        StringBuffer nicksOnline = new StringBuffer();
         nicksOnline.append("/currentonlinelist");
         for (ClientHandler c: clients) {
             nicksOnline.append(" " + c.getName());
@@ -69,10 +73,12 @@ public class Server {
         return nicksOnline.toString();
     }
 
+    // searches recipient among connected clients array using nickname from message's prefix, splits message and passes it to recipient's sendMessage
+    // TODO implement substring method instead of append
     public void sendPrivateMessage(ClientHandler sender, String msg) {
         String[] elements = msg.split(" ");
         String nick = elements[1];
-        StringBuilder message = new StringBuilder();
+        StringBuffer message = new StringBuffer();
         for (int i = 2; i < elements.length; i++) {
             if (i == elements.length - 1) message.append(elements[i]);
             else message.append(elements[i] + " ");
@@ -84,6 +90,7 @@ public class Server {
         if (client != null) client.sendMessage("private message from " + sender.getName() + ": " + message.toString());
     }
 
+    // removes client from array
     public void unSubscribeMe(ClientHandler c) {
         clients.remove(c);
     }
