@@ -74,7 +74,7 @@ public class ChatController implements Initializable {
 
     // listens for click on elements of ListView and starts private message input
     // TODO add prefix without deleting already entered message
-    public void setListViewListener() {
+    private void setListViewListener() {
         onlineList.setOnMouseClicked(new EventHandler<MouseEvent>() {
 
             @Override

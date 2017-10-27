@@ -31,6 +31,7 @@ public class Server {
             System.out.println("Сервер онлайн, ждет подключений");
             while (true) {
                 clientSocket = serverSocket.accept();
+                clientSocket.setSoTimeout(10000);
                 clients.add(new ClientHandler(clientSocket, this));
                 System.out.println("Клиент подключился");
             }
@@ -63,14 +64,15 @@ public class Server {
 
     // gathers nicknames of currently online users and returns them as sequence in String object
     // TODO remove "undefinied" entries
-    public String makeOnlineList() {
+    public void sendOnlineList() {
         StringBuffer nicksOnline = new StringBuffer();
         nicksOnline.append("/currentonlinelist");
         for (ClientHandler c: clients) {
+            if (!c.getName().equals("undefined"))
             nicksOnline.append(" " + c.getName());
         }
         System.out.println(nicksOnline.toString());
-        return nicksOnline.toString();
+        broadcast(nicksOnline.toString());
     }
 
     // searches recipient among connected clients array using nickname from message's prefix, splits message and passes it to recipient's sendMessage
@@ -93,6 +95,8 @@ public class Server {
     // removes client from array
     public void unSubscribeMe(ClientHandler c) {
         clients.remove(c);
+        System.out.println("Подключенных клиентов: " + clients.size());
+        if (clients.size() != 0) sendOnlineList();
     }
 }
 

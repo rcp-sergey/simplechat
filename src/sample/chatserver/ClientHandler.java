@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 
 public class ClientHandler {
@@ -21,7 +22,7 @@ public class ClientHandler {
         try {
             in = new DataInputStream(clientSocket.getInputStream());
             out = new DataOutputStream(clientSocket.getOutputStream());
-            name = "undefinied";
+            name = "undefined";
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,7 +47,7 @@ public class ClientHandler {
                     } else sendMessage("Для начала нужно авторизоваться");
                 } //конец цикла авторизации
                 System.out.println("Авторизация завершена");
-                server.broadcast(server.makeOnlineList());
+                server.sendOnlineList();
                 while (true) {
                     String msg = in.readUTF();
                     System.out.println(msg);
@@ -55,11 +56,12 @@ public class ClientHandler {
                         server.sendPrivateMessage(this, msg);
                     } else server.broadcast(this.name + " " + msg);
                 }
+            } catch (SocketTimeoutException e) {
+                System.out.println(name + " отключен по таймауту");
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 server.unSubscribeMe(this);
-                Connection.getInstance().sendMessage(server.makeOnlineList());
                 try {
                     clientSocket.close();
                 } catch (IOException e) {

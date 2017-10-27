@@ -5,14 +5,17 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 
 //Singleton class that establishes and maintains clients connection to chat server
 public class Connection {
     private static final String SERVER_ADDR = "localhost";
     private static final int SERVER_PORT = 4000;
+    private Socket socket;
     private static DataInputStream in;
     private static DataOutputStream out;
     private String currentNick;
+    private boolean wasConnected;
 
     public String getCurrentNick() {
         return currentNick;
@@ -38,7 +41,7 @@ public class Connection {
 
     public void startConnection() {
         try {
-            Socket socket = new Socket(SERVER_ADDR, SERVER_PORT);
+            socket = new Socket(SERVER_ADDR, SERVER_PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             System.out.println("Соединение с сервером установлено");
@@ -49,12 +52,25 @@ public class Connection {
 
     // clients authentication method
     public String auth(String login, String pass) {
+        try {
+            out.writeUTF(" ");
+            in.readUTF();
+        } catch (SocketException e) {
+            System.out.println("Переподключение");
+            startConnection();
+            return "/reconnect";
+        } catch (IOException e) {
+            System.out.println("IO");
+            e.printStackTrace();
+            return "/reconnect";
+        }
         sendMessage("/auth " + login + " " + pass);
         String response = receiveMessage();
         if (response.startsWith("/authok")) {
             String[] elements = response.split(" ");
             currentNick = elements[1];
-            return "success";
+            wasConnected = true;
+            return "/success";
         }
         return response;
     }
