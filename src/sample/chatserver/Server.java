@@ -31,7 +31,6 @@ public class Server {
             System.out.println("Сервер онлайн, ждет подключений");
             while (true) {
                 clientSocket = serverSocket.accept();
-                clientSocket.setSoTimeout(10000);
                 clients.add(new ClientHandler(clientSocket, this));
                 System.out.println("Клиент подключился");
             }
@@ -54,7 +53,7 @@ public class Server {
         }
     }
 
-    // checks if user with the same nick is already online
+    // checks whether user with the same nick is already online
     public boolean isNickBusy(String nick) {
         for (ClientHandler c: clients) {
             if (c.getName().equals(nick)) return true;
@@ -63,7 +62,6 @@ public class Server {
     }
 
     // gathers nicknames of currently online users and returns them as sequence in String object
-    // TODO remove "undefinied" entries
     public void sendOnlineList() {
         StringBuffer nicksOnline = new StringBuffer();
         nicksOnline.append("/currentonlinelist");
@@ -76,20 +74,16 @@ public class Server {
     }
 
     // searches recipient among connected clients array using nickname from message's prefix, splits message and passes it to recipient's sendMessage
-    // TODO implement substring method instead of append
     public void sendPrivateMessage(ClientHandler sender, String msg) {
-        String[] elements = msg.split(" ");
-        String nick = elements[1];
-        StringBuffer message = new StringBuffer();
-        for (int i = 2; i < elements.length; i++) {
-            if (i == elements.length - 1) message.append(elements[i]);
-            else message.append(elements[i] + " ");
-        }
-        ClientHandler client = null;
+        // "msg" argument example: /w nick1 message text
+        String nick = msg.split(" ")[1];
+        ClientHandler recipient = null;
         for(ClientHandler c: clients) {
-            if (c.getName().contains(nick)) client = c;
+            if (c.getName().contains(nick)) recipient = c;
         }
-        if (client != null) client.sendMessage("private message from " + sender.getName() + ": " + message.toString());
+        if (recipient == null) return;
+        String privateMessage = msg.substring(msg.indexOf(" ") + nick.length(), msg.length());
+        recipient.sendMessage("private from " + sender.getName() + ": " + privateMessage);
     }
 
     // removes client from array

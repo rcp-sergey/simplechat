@@ -6,6 +6,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 //Singleton class that establishes and maintains clients connection to chat server
 public class Connection {
@@ -50,18 +52,28 @@ public class Connection {
         }
     }
 
+/*    public void restartConnection() {
+        Timer restartTimer = new Timer();
+        TimerTask restartTask = new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Попытка переподключения к серверу");
+                startConnection();
+            }
+        };
+        restartTimer.schedule(restartTask, 0, 3000);
+    }*/
+
     // clients authentication method
     public String auth(String login, String pass) {
         try {
-            out.writeUTF(" ");
+            out.writeUTF("/check");
             in.readUTF();
         } catch (SocketException e) {
-            System.out.println("Переподключение");
             startConnection();
             return "/reconnect";
         } catch (IOException e) {
-            System.out.println("IO");
-            e.printStackTrace();
+            startConnection();
             return "/reconnect";
         }
         sendMessage("/auth " + login + " " + pass);

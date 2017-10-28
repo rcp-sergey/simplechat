@@ -6,19 +6,25 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class ClientHandler {
+    private final static int TIME_OUT = 5000;
     private Socket clientSocket;
     private Server server;
     private DataInputStream in;
     private DataOutputStream out;
     private String name;
+    private Timer disconnectTimer;
 
     public ClientHandler(Socket clientSocket, Server server) {
         this.server = server;
         this.clientSocket = clientSocket;
+        setNotLoggedInDisconnection(); // enable disconnection by timeout until client is authorized
         try {
             in = new DataInputStream(clientSocket.getInputStream());
             out = new DataOutputStream(clientSocket.getOutputStream());
@@ -27,7 +33,6 @@ public class ClientHandler {
             e.printStackTrace();
         }
         new Thread( () -> {
-            // TODO auth
             try {
                 //Авторизация
                 while (true) {
@@ -36,7 +41,7 @@ public class ClientHandler {
                         String[] elements = msg.split(" ");
                         String nick = server.getAuthService().getNickLoginByPass(elements[1], elements[2]);
                         System.out.println(nick);
-                        if (nick != null) { //если указаны верные учетные данные
+                        if (nick != null) { // если указаны верные учетные данные
                             if (!server.isNickBusy(nick)) {
                                 sendMessage("/authok " + nick);
                                 this.name = nick;
@@ -46,6 +51,7 @@ public class ClientHandler {
                         } else sendMessage("Указаны неверные учетные данные");
                     } else sendMessage("Для начала нужно авторизоваться");
                 } //конец цикла авторизации
+                disconnectTimer.cancel(); // disable disconnection by time out task
                 System.out.println("Авторизация завершена");
                 server.sendOnlineList();
                 while (true) {
@@ -56,8 +62,8 @@ public class ClientHandler {
                         server.sendPrivateMessage(this, msg);
                     } else server.broadcast(this.name + " " + msg);
                 }
-            } catch (SocketTimeoutException e) {
-                System.out.println(name + " отключен по таймауту");
+            } catch (SocketException e) {
+                System.out.println("Сокет клиента " + name + " отключен");
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -69,6 +75,24 @@ public class ClientHandler {
                 }
             }
         }).start();
+    }
+
+    private void setNotLoggedInDisconnection() {
+        ClientHandler clientHandler = this;
+        TimerTask disconnectTask = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+/*                server.unSubscribeMe(clientHandler);*/
+                System.out.println("Клиент " + name + " отключен по таймауту");
+            }
+        };
+        disconnectTimer = new Timer();
+        disconnectTimer.schedule(disconnectTask, TIME_OUT);
     }
 
     public void sendMessage(String msg) {

@@ -72,22 +72,25 @@ public class ChatController implements Initializable {
         setListViewListener();
     }
 
-    // listens for click on elements of ListView and starts private message input
-    // TODO add prefix without deleting already entered message
+    // listens for click on elements of ListView and adds prefix to the beginning of message input
+    // TODO replace prefix instead of adding it infinitely
     private void setListViewListener() {
         onlineList.setOnMouseClicked(new EventHandler<MouseEvent>() {
 
             @Override
             public void handle(MouseEvent event) {
-                if(onlineList.getSelectionModel().getSelectedItem() != null && !onlineList.getSelectionModel().getSelectedItem().equals("ONLINE NOW") && !onlineList.getSelectionModel().getSelectedItem().equals(Connection.getInstance().getCurrentNick()))
-                    messageInput.setText("/w " + onlineList.getSelectionModel().getSelectedItem()+" ");
+                if(onlineList.getSelectionModel().getSelectedItem() != null && !onlineList.getSelectionModel().getSelectedItem().equals("ONLINE") && !onlineList.getSelectionModel().getSelectedItem().toString().contains(" (Я)")) {
+                    String currentInput = messageInput.getText();
+                    messageInput.setText("/w " + onlineList.getSelectionModel().getSelectedItem() + " " + currentInput);
+                }
             }
         });
     }
     // updates GUI's list of online users
     public void updateOnlineList(String list) {
         String[] elements = list.split(" ");
-        elements[0] = "ONLINE NOW";
+        elements[0] = "ONLINE";
+        for (int i = 0; i < elements.length; i++) if (elements[i].equals(conn.getCurrentNick())) elements[i] = elements[i] + " (Я)";
         onlineList.getItems().clear();
         onlineList.refresh();
         onlineList.getItems().addAll(elements);
