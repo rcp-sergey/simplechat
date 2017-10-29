@@ -2,6 +2,8 @@ package sample.chatclient;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -12,6 +14,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class ChatController implements Initializable {
@@ -40,15 +44,19 @@ public class ChatController implements Initializable {
     // starts message receiving thread
     public void startReceive() {
         Thread receiveThread = new Thread( () -> {
-            String msg;
+            /*String msg;*/
             while (true) {
-                msg = null;
+                final String msg;
                 msg = conn.receiveMessage();
                 if (msg != null && !msg.equals("")) {
-                    if (msg.startsWith("/currentonlinelist")) updateOnlineList(msg);
-                    else {
-                        messageArea.appendText(msg + "\n");
-                        System.out.println(msg);
+                    if (msg.startsWith("/currentonlinelist")) {
+                        Platform.runLater( () -> {
+                            updateOnlineList(msg);
+                        });
+                    } else {
+                        Platform.runLater( () -> {
+                            messageArea.appendText(msg + "\n");
+                        });
                     }
                 }
             }
@@ -67,26 +75,33 @@ public class ChatController implements Initializable {
         } else if (filename.equals("chat.fxml")) {
             fadeTrans(chatPane);
         }
-
         startReceive();
         setListViewListener();
     }
 
-    // listens for click on elements of ListView and adds prefix to the beginning of message input
-    // TODO replace prefix instead of adding it infinitely
+    // listens for click on elements of ListView and adds (or replaces) prefix to the beginning of message input if it's necessary
     private void setListViewListener() {
         onlineList.setOnMouseClicked(new EventHandler<MouseEvent>() {
 
             @Override
             public void handle(MouseEvent event) {
                 if(onlineList.getSelectionModel().getSelectedItem() != null && !onlineList.getSelectionModel().getSelectedItem().equals("ONLINE") && !onlineList.getSelectionModel().getSelectedItem().toString().contains(" (Я)")) {
+                    Object[] onlineListArray = onlineList.getItems().toArray();
+                    String selectedNick = onlineList.getSelectionModel().getSelectedItem().toString();
                     String currentInput = messageInput.getText();
-                    messageInput.setText("/w " + onlineList.getSelectionModel().getSelectedItem() + " " + currentInput);
+                    for (Object o: onlineListArray) {
+                        if (currentInput.startsWith("/w " + o + " ")) {
+                            messageInput.setText("/w " + selectedNick + " " + currentInput.substring(4 + ((String)o).length(), currentInput.length()));
+                            return;
+                        } else if (currentInput.startsWith("/w " + o + " ")) return;
+                    }
+                    messageInput.setText("/w " + selectedNick + " " + currentInput);
                 }
             }
         });
     }
     // updates GUI's list of online users
+    // TODO replace "online" entry with label
     public void updateOnlineList(String list) {
         String[] elements = list.split(" ");
         elements[0] = "ONLINE";

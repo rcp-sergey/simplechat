@@ -13,7 +13,7 @@ import java.util.TimerTask;
 
 
 public class ClientHandler {
-    private final static int TIME_OUT = 5000;
+    private final static int TIME_OUT = 12000;
     private Socket clientSocket;
     private Server server;
     private DataInputStream in;
@@ -97,7 +97,6 @@ public class ClientHandler {
 
     public void sendMessage(String msg) {
         try {
-            System.out.println("sendMessage " + msg);
             out.writeUTF(msg);
             out.flush();
         } catch (IOException e) {

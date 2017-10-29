@@ -69,7 +69,6 @@ public class Server {
             if (!c.getName().equals("undefined"))
             nicksOnline.append(" " + c.getName());
         }
-        System.out.println(nicksOnline.toString());
         broadcast(nicksOnline.toString());
     }
 

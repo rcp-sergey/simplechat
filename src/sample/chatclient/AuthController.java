@@ -24,61 +24,62 @@ public class AuthController {
     @FXML
     private Label systemMessage;
     private Connection conn = Connection.getInstance();
+    private final int MAX_ATTEMPTS = 10;
 
     public void logIn() {
         // TODO disable elements during auth
+
         String login = loginField.getText();
         String pass = passField.getText();
+        if (loginField.getText().equals("") || passField.getText().equals("")) {
+            systemMessage.setText("Введите учетные данные");
+            return;
+        }
+        logInButton.setDisable(true);
         final String[] response = new String[1];
         Timer authTimer = new Timer();
         TimerTask authTask = new TimerTask() {
             @Override
             public void run() {
-                boolean haveResponce = false;
-                while (!haveResponce) {
+                int attempts = 0;
+                boolean haveResponse = false;
+                while (!haveResponse) {
                     response[0] = conn.auth(login, pass);
-                    if (response[0].equals("/reconnect"))
-                        Platform.runLater(() -> {
-                            systemMessage.setText("Переподключение");
-                        });
+                    if (response[0].equals("/reconnect")) {
+                        if (attempts < MAX_ATTEMPTS) {
+                            final int attemptsToShow = attempts + 1;
+                            Platform.runLater(() -> {
+                                systemMessage.setText("Переподключение: попытка " + attemptsToShow);
+                            });
+                            attempts++;
+                        } else {
+                            Platform.runLater(() -> {
+                                systemMessage.setText(conn.getNetState());
+                                logInButton.setDisable(false);
+                            });
+                            haveResponse = true;
+                            authTimer.cancel();
+                        }
+                    }
                     else if (response[0].equals("/success")) {
                         Platform.runLater(() -> {
                             systemMessage.setText("Вход выполнен");
                             Client.changeScene("chat.fxml");
+                            logInButton.setDisable(false);
                         });
-                        haveResponce = true;
+                        haveResponse = true;
                         authTimer.cancel();
                     } else {
                         Platform.runLater(() -> {
-                            systemMessage.setText("Вход выполнен");
                             systemMessage.setText(response[0]);
+                            logInButton.setDisable(false);
                         });
-                        haveResponce = true;
+                        haveResponse = true;
                         authTimer.cancel();
                     }
                 }
             }
         };
         authTimer.schedule(authTask, 0, 3000);
-/*        *//*systemMessage.setText("");*//*
-        *//*String response = conn.auth(loginField.getText(), passField.getText());*//*
-        if (response[0].equals("/success")) {
-            Client.changeScene("chat.fxml");
-        } else if (response[0].equals("/reconnect")) {
-            //
-            loginField.setDisable(true);
-            passField.setDisable(true);
-            logInButton.setDisable(true);
-            StringBuffer alert = new StringBuffer();
-            alert.append("Переподключение");
-            for (int i = 0; i < 10; i ++) {
-                systemMessage.setText(alert.append(". ").toString());
-
-                }
-            loginField.setDisable(false);
-            passField.setDisable(false);
-            logInButton.setDisable(false);
-            logIn();
-        } else systemMessage.setText(response[0]);*/
     }
 }

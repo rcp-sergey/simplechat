@@ -22,7 +22,7 @@ public class Client extends Application{
         stage = primaryStage;
         Parent root = FXMLLoader.load(Client.class.getResource("auth.fxml"));
         primaryStage.setTitle("simpleChat");
-        primaryStage.setResizable(true);
+        primaryStage.setResizable(false); // auth window is not resizable
         Scene scene = new Scene(root, WIDTH, HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -37,6 +37,7 @@ public class Client extends Application{
                     Platform.exit();
                 }
             });
+            stage.setResizable(true); // allow changing of chat window size
             stage.setTitle("simpleChat - " + Connection.getInstance().getCurrentNick());
             stage.setScene(new Scene(root, WIDTH, HEIGHT));
         } catch (IOException e) {

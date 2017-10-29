@@ -1,5 +1,7 @@
 package sample.chatclient;
 
+import javafx.application.Platform;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -18,6 +20,7 @@ public class Connection {
     private static DataOutputStream out;
     private String currentNick;
     private boolean wasConnected;
+    private String netState;
 
     public String getCurrentNick() {
         return currentNick;
@@ -46,13 +49,19 @@ public class Connection {
             socket = new Socket(SERVER_ADDR, SERVER_PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
+            netState = "Соединение с сервером установлено";
             System.out.println("Соединение с сервером установлено");
         } catch (IOException e) {
-            e.printStackTrace();
+            netState = "Сервер недоступен";
+/*            e.printStackTrace();*/
         }
     }
 
-/*    public void restartConnection() {
+    public String getNetState() {
+        return netState;
+    }
+
+    /*    public void restartConnection() {
         Timer restartTimer = new Timer();
         TimerTask restartTask = new TimerTask() {
             @Override
@@ -67,8 +76,13 @@ public class Connection {
     // clients authentication method
     public String auth(String login, String pass) {
         try {
-            out.writeUTF("/check");
-            in.readUTF();
+            if (out !=null && in != null) {
+                out.writeUTF("/check");
+                in.readUTF();
+            } else {
+                startConnection();
+                return "/reconnect";
+            }
         } catch (SocketException e) {
             startConnection();
             return "/reconnect";
