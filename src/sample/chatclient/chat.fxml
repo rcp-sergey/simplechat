@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -12,6 +13,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <BorderPane fx:id="chatPane" stylesheets="@chatstyle.css" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.chatclient.ChatController">
    <top>
@@ -64,10 +66,18 @@
       </TextArea>
    </center>
    <right>
-      <ListView fx:id="onlineList" prefWidth="100.0" BorderPane.alignment="CENTER">
+      <VBox alignment="CENTER" BorderPane.alignment="CENTER">
          <BorderPane.margin>
             <Insets right="10.0" top="10.0" />
          </BorderPane.margin>
-      </ListView>
+         <children>
+            <Label fx:id="onlineLabel" alignment="CENTER" contentDisplay="CENTER" prefWidth="100.0" styleClass="onlineLabel" text="Online" textAlignment="CENTER" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+            </Label>
+            <ListView fx:id="onlineList" prefWidth="100.0" />
+         </children>
+      </VBox>
    </right>
 </BorderPane>

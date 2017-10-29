@@ -101,10 +101,8 @@ public class ChatController implements Initializable {
         });
     }
     // updates GUI's list of online users
-    // TODO replace "online" entry with label
     public void updateOnlineList(String list) {
-        String[] elements = list.split(" ");
-        elements[0] = "ONLINE";
+        String[] elements = list.substring(list.split(" ")[0].length() + 1, list.length()).split(" ");
         for (int i = 0; i < elements.length; i++) if (elements[i].equals(conn.getCurrentNick())) elements[i] = elements[i] + " (Я)";
         onlineList.getItems().clear();
         onlineList.refresh();
